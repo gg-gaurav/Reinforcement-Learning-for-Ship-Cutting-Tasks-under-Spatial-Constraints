@@ -1,0 +1,94 @@
+from panda_gym.envs.core import RobotTaskEnv
+from panda_gym.pybullet import PyBullet
+from typing import Any, Dict, Optional, Tuple
+
+from pandaTask import pandaTask
+from pandaRobot import pandaRobot
+
+import numpy as np
+
+
+
+class pandaTaskEnv(RobotTaskEnv):
+    """Reach task wih Panda robot.
+
+    Args:
+        render_mode (str, optional): Render mode. Defaults to "rgb_array".
+        reward_type (str, optional): "sparse" or "dense". Defaults to "sparse".
+        control_type (str, optional): "ee" to control end-effector position or "joints" to control joint values.
+            Defaults to "ee".
+        renderer (str, optional): Renderer, either "Tiny" or OpenGL". Defaults to "Tiny" if render mode is "human"
+            and "OpenGL" if render mode is "rgb_array". Only "OpenGL" is available for human render mode.
+        render_width (int, optional): Image width. Defaults to 720.
+        render_height (int, optional): Image height. Defaults to 480.
+        render_target_position (np.ndarray, optional): Camera targeting this position, as (x, y, z).
+            Defaults to [0., 0., 0.].
+        render_distance (float, optional): Distance of the camera. Defaults to 1.4.
+        render_yaw (float, optional): Yaw of the camera. Defaults to 45.
+        render_pitch (float, optional): Pitch of the camera. Defaults to -30.
+        render_roll (int, optional): Roll of the camera. Defaults to 0.
+    """
+
+    def __init__(
+        self,
+        render_mode: str = "rgb_array",
+        renderer: str = "Tiny",
+        render_width: int = 720,
+        render_height: int = 480,
+        render_target_position: np.ndarray = [0, 0, 0.1],
+        render_distance: float = 1.0,
+        render_yaw: float = -180,
+        render_pitch: float = -40,
+        render_roll: float = 0,
+    ) -> None:
+        sim = PyBullet(render_mode=render_mode, renderer=renderer)
+        robot = pandaRobot(sim)
+        task = pandaTask(sim, 
+                               body_id= robot.sim._bodies_idx[robot.body_name],
+                               get_ee_position=robot.get_ee_position, 
+                               get_ee_velocity=robot.get_ee_velocity,
+                               get_ee_orientation= robot.get_ee_orientation,
+                               get_joint_angle= robot.get_joint_angle,
+                               get_joint_velocity = robot.get_joint_velocity,
+                               set_joint_angles= robot.set_joint_angles)
+        super().__init__(
+            robot,
+            task,
+            render_width=render_width,
+            render_height=render_height,
+            render_target_position=render_target_position,
+            render_distance=render_distance,
+            render_yaw=render_yaw,
+            render_pitch=render_pitch,
+            render_roll=render_roll,
+        )
+        
+
+    
+    def step(self, action: np.ndarray) -> Tuple[Dict[str, np.ndarray], float, bool, bool, Dict[str, Any]]:
+        self.robot.set_action(action)
+        self.sim.step()
+        observation = self._get_obs()
+
+        self.task.episodic_steps += 1     
+        terminated = False   
+        truncated = False
+
+        if self.task.episodic_steps >= self.task.max_steps:
+            terminated = True
+            truncated = True
+            self.task.start = self.task.get_ee_position()
+    
+        #info = {"is_success": terminated}
+        info = {"is_success": terminated, 
+                "waypointR":self.task.waypointR,
+                "dwellR":self.task.dwellR,
+                "velocityR":self.task.velocityR,
+                "boundsR": self.task.boundsR,
+                "orientationR":self.task.orientationR
+                }
+        reward = float(self.task.compute_reward(observation["achieved_goal"], self.task.get_goal(), info))
+
+        return observation, reward, terminated, truncated, info
+
+    
