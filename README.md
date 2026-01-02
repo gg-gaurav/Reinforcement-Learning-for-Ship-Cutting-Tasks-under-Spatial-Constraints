@@ -67,9 +67,6 @@ Does the final ablation study for different kinds of reward formualation for var
 - Comparison across different reward formulations
 - Final results and metrics
 
-### Usage
-
-
 ### Research Context
 This project was developed as part of a research project at IGMR, RWTH Aachen. The goal is to advance RL-based control methods for constrained manipulation tasks in industrial robotics applications.
 
