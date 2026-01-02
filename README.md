@@ -16,7 +16,7 @@ The project investigates whether RL-based policies can learn to navigate complex
 The project follows an incremental development approach, with each test building upon previous capabilities:
 
 #### Test0 - SB + Panda
-**Basic reach task using StableBaseline3**
+**Basic reach task using StableBaseline3**//
 Initial experiments with the robot in the default PandaGym environment. The robot learns to complete a simple reach task where it must move the end-effector to a specific target location.
 **Purpose**: Baseline RL setup and environment validation
 
