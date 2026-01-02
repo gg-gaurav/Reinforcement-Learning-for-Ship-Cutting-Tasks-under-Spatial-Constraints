@@ -51,6 +51,7 @@ Complete implementation combining position and orientation constraints. The robo
 - Reach the final end location
 - Maintain spatial constraints
 - Satisfy orientation constraints throughout the trajectory
+
 **Key Features**:
 - 6 DoF constraint handling (3 position + 3 orientation)
 - End-effector orientation control
